@@ -370,4 +370,96 @@ function App() {
 
 The Students List or Manage Students pages are still empty. Let's develop these pages next.
 
+## Create Students List Page
+Get the students list via the backend API that was developed with Django.  
+To call the API from React, create a StudentService.
 
+1. Create a folder named ```services``` inside ```/srcfolder``` and add a file named ```StudentService.js``` inside ```/src/services``` folder with this code:
+```
+import axios from 'axios';
+
+export function getStudents() {
+  return axios.get('http://127.0.0.1:8000/students/')
+    .then(response => response.data)
+}
+```
+
+This creates a function ```getStudents()``` which calls backend API endpoint ```/students``` to fetch a list of students from the database. We need to use the ```axios library``` for this. Install this library using this command:
+```
+npm install axios
+```
+
+2. Add styling to this component inside App.css file:
+```
+.side-container {
+   padding-top: 30px;
+}
+
+.side-row {
+   padding: 30px;
+}
+
+.react-bootstrap-table thead { 
+    position: sticky; 
+    top: 0; 
+    background-color: #333; 
+    z-index: 1021; 
+    color: white; 
+}
+```
+
+3. Add a file named ```Students.js``` inside ```/src/components``` folder with below code:
+```
+import React, { useEffect, useState } from 'react';
+import { Table } from 'react-bootstrap';
+import { getStudents } from '../services/StudentService';
+import "../App.css";
+
+const Students = () => {
+  const [students, setStudents] = useState([]);
+
+  useEffect(() => {
+   let mounted = true;
+   getStudents()
+     .then(data => {
+       if(mounted) {
+         setStudents(data)
+       }
+     })
+   return () => mounted = false;
+ }, [])
+
+  return(
+   <div className="container-fluid side-container">
+   <div className="row side-row" >
+    <p id="before-table"></p>
+        <Table striped bordered hover className="react-bootstrap-table" id="dataTable">
+        <thead>
+            <tr>
+            <th>ID</th>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Registration No</th>
+            <th>Email</th>
+            <th>Course</th>
+            </tr>
+        </thead>
+        <tbody>
+            {students.map((stu) =>
+            <tr key={stu.id}>
+                <td>{stu.studentId}</td>
+                <td>{stu.FirstName}</td>
+                <td>{stu.LastName}</td>
+                <td>{stu.RegistrationNo}</td>
+                <td>{stu.Email}</td>
+                <td>{stu.Course}</td>
+            </tr>)}
+        </tbody>
+    </Table>
+    </div>
+  </div>
+  );
+};
+
+export default Students;
+```
