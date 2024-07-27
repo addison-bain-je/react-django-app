@@ -463,3 +463,34 @@ const Students = () => {
 
 export default Students;
 ```
+
+Everytime the page is refreshed or loaded, ```useEffect``` hook will call the ```getStudents``` service that is defined inside ```StudentService.js``` file.
+
+4. Finally, add a route for Students component inside ```App.js```:
+```
+import Students from "./components/Students";
+function App() {
+  return (
+    <BrowserRouter>
+      <Navigation />
+      <Routes>
+         <Route exact path="/" element={<Home/>} />
+         <Route path="/students" element={<Students/>} />
+       </Routes>
+    </BrowserRouter>
+  );
+}
+```
+
+5. Refresh the React page and navigate to Students List page to get the data from backend.
+   Make sure the Django server is up first.
+```
+cd backend
+python manage.py runserver
+```
+
+7. If you do not see any data, then make sure that backend service is up. To start the backend navigate to backend directory and start django server:
+
+cd backend
+python manage.py runserver
+
