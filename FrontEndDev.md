@@ -295,5 +295,79 @@ function App() {
 7. After refreshing the page, the side navigation bar should appear:
 ![SideBar](/screenshots/24_ReactAppSideBar.png)
 
-## Create Home Page
-   
+## Create Home Page  
+Create a home page with a simple image slider. For image slider, use **react-bootstrap** ```Carousel```component.
+
+1. Add a file named ```Home.js``` inside /src/components folder with this code:
+```
+import slide01 from '../static/slide01.jpg'
+import slide02 from '../static/slide02.jpg'
+import slide03 from '../static/slide03.jpg'
+
+import Carousel from 'react-bootstrap/Carousel';
+
+const Home = () => {
+  return (
+  <div className="row">
+    <Carousel variant="dark">
+      <Carousel.Item>
+        <img
+          className="d-block w-100"
+          src={slide01}
+          alt="First slide"
+        />
+      </Carousel.Item>
+      <Carousel.Item>
+        <img
+          className="d-block w-100"
+          src={slide03}
+          alt="Second slide"
+        />
+      </Carousel.Item>
+      <Carousel.Item>
+        <img
+          className="d-block w-100"
+          src={slide02}
+          alt="Third slide"
+        />
+      </Carousel.Item>
+    </Carousel>
+    </div>
+  );
+};
+
+export default Home;
+```
+
+2. Add files slide01.jpg, slide02.jpg and slide03.jpg inside ```/src/static``` folder.
+
+3. Then add ```Home``` component inside ```App.js``` file for this to render. Before that, install ```react-router library``` to route to different pages.
+```
+npm install react-router
+npm install react-router-dom
+```
+
+4. Add Home component as a Route inside ```App.js``` file:
+```
+import Home from "./components/Home";
+import {BrowserRouter, Route, Routes} from 'react-router-dom';
+function App() {
+  return (
+    <BrowserRouter>
+      <Navigation />
+      <Routes>
+         <Route exact path="/" element={<Home/>} />
+       </Routes>
+    </BrowserRouter>
+  );
+}
+```
+
+5. Execute ```npm start``` and refresh the page, it should look like this:
+
+![HomePage](/screenshots/25_ReactAppHomePage.png)
+
+
+The Students List or Manage Students pages are still empty. Let's develop these pages next.
+
+
