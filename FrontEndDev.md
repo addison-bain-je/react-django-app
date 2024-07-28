@@ -489,8 +489,439 @@ cd backend
 python manage.py runserver
 ```
 
-7. If you do not see any data, then make sure that backend service is up. To start the backend navigate to backend directory and start django server:
+## Cross-Origin Resource Sharing  
+If the Student list does not load or some error messages appear, it is probably due to ```Cross-Origin Resource Sharing``` not allowed by backend server. In that case ```AllowOrigin header``` is usually missing in the response. To allow Javascript to read response data from API, ```Cross-Origin Resource Sharing``` must be allowed by the backend server.  
 
-cd backend
-python manage.py runserver
+In ```backend/settings.py``` file, check for the following:
 
+i) Check if ```’corsheaders'``` is added in ```INSTALLED_APPS```:
+```
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'backend',
+    'corsheaders',
+    'rest_framework',
+]
+```
+
+ii) Check if ```CORS_ORIGIN_ALLOW_ALL = True``` is set:
+```
+CORS_ORIGIN_ALLOW_ALL = True
+```
+
+iii) Check if ```'corsheaders.middleware.CorsMiddleware'``` is added in MIDDLEWARE:
+```
+CORS_ORIGIN_ALLOW_ALL = True
+
+MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+```
+
+Refresh the Students page again and the data should be loaded onto the view.
+//Image26_StudentsView
+
+
+## Create Manage Students Page
+Now develop the functionalities to add student, update student and delete student. Separate components will be used for these. Install ```react-icons``` library to use delete and update icons from this library.
+```
+npm install react-icons
+```
+
+**Create Manage.js**  
+1. Add a file named ```Manage.js``` in ```/src/components``` folder
+  
+2. Add these imports in ```Manage.js``` file:
+```
+import React,{ useEffect, useState } from 'react';
+import {Table} from 'react-bootstrap';
+
+import {Button,ButtonToolbar } from 'react-bootstrap';
+import { FaEdit } from 'react-icons/fa';
+import { RiDeleteBin5Line } from 'react-icons/ri';
+import { getStudents, deleteStudent } from '../services/StudentService';
+import AddStudentModal from "./AddStudentModal";
+import UpdateStudentModal from "./UpdateStudentModal";
+```
+
+Use ```useState``` hook for managing states e.g. for updating students list when a new student is added or deleted.  
+```useEffect``` state will be used for managing events e.g. updating page contents when a student is added or deleted.
+
+Add components for ```AddStudentModal``` and ```updateStudentModal``` later.
+
+3. Add these states in ```Manage.js``` file:
+```
+const Manage = () => {
+    const [students, setStudents] = useState([]);
+    const [addModalShow, setAddModalShow] = useState(false);
+    const [editModalShow, setEditModalShow] = useState(false);
+    const [editStudent, setEditStudent] = useState([]);
+    const [isUpdated, setIsUpdated] = useState(false);
+};
+```
+
+4. Add ```useEffect``` hook in ```Manage.js```:
+```
+useEffect(() => {
+   let mounted = true;
+   if(students.length && !isUpdated) {
+    return;
+    }
+   getStudents()
+     .then(data => {
+       if(mounted) {
+         setStudents(data);
+       }
+     })
+   return () => {
+      mounted = false;
+      setIsUpdated(false);
+   }
+ }, [isUpdated, students])
+
+export default Manage;
+```
+
+This hook checks if the students list is updated on backend due to any CRUD operation, which then updates the students state and re-render the updated list on the frontend.
+
+5. Next, add handlers for handling update, add and delete events:
+```
+   const handleUpdate = (e, stu) => {
+    e.preventDefault();
+    setEditModalShow(true);
+    setEditStudent(stu);
+};
+```
+
+Here, when a user clicks on update button, call ```handleUpdate``` handler on button click event. This handler will set some states i.e. enable edit student form for editing student record.
+
+Similarly, add the Add and Delete handlers:
+```
+const handleAdd = (e) => {
+    e.preventDefault();
+    setAddModalShow(true);
+};
+
+const handleDelete = (e, studentId) => {
+    if(window.confirm('Are you sure ?')){
+        e.preventDefault();
+        deleteStudent(studentId)
+        .then((result)=>{
+            alert(result);
+            setIsUpdated(true);
+        },
+        (error)=>{
+            alert("Failed to Delete Student");
+        })
+    }
+};
+```
+
+In ```handleDelete```, call the ```deleteStudent``` service which will be defined in ```/src/services/StudentService.js``` file:
+```
+export function deleteStudent(studentId) {
+  return axios.delete('http://127.0.0.1:8000/students/' + studentId + '/', {
+   method: 'DELETE',
+   headers: {
+     'Accept':'application/json',
+     'Content-Type':'application/json'
+   }
+  })
+  .then(response => response.data)
+}
+```
+
+6. Finally, add bootstrap for rendering content on Manage students page on the ```Manage.js``` file:
+```
+let AddModelClose=()=>setAddModalShow(false);
+let EditModelClose=()=>setEditModalShow(false);
+return(
+    <div className="container-fluid side-container">
+    <div className="row side-row" >
+    <p id="manage"></p>
+        <Table striped bordered hover className="react-bootstrap-table" id="dataTable">
+            <thead>
+            <tr>
+              <th >ID</th>
+              <th>First Name</th>
+              <th>Last Name</th>
+              <th>Registration No</th>
+              <th>Email</th>
+              <th>Course</th>
+              <th>Action</th>
+            </tr>
+            </thead>
+            <tbody>
+              { students.map((stu) =>
+
+              <tr key={stu.id}>
+              <td>{stu.studentId}</td>
+              <td>{stu.FirstName}</td>
+              <td>{stu.LastName}</td>
+              <td>{stu.RegistrationNo}</td>
+              <td>{stu.Email}</td>
+              <td>{stu.Course}</td>
+              <td>
+
+              <Button className="mr-2" variant="danger"
+                onClick={event => handleDelete(event,stu.studentId)}>
+                    <RiDeleteBin5Line />
+              </Button>
+              <span>&nbsp;&nbsp;&nbsp;</span>
+              <Button className="mr-2"
+                onClick={event => handleUpdate(event,stu)}>
+                    <FaEdit />
+              </Button>
+              <UpdateStudentModal show={editModalShow} student={editStudent} setUpdated={setIsUpdated}
+                          onHide={EditModelClose}></UpdateStudentModal>
+            </td>
+            </tr>)}
+          </tbody>
+        </Table>
+        <ButtonToolbar>
+            <Button variant="primary" onClick={handleAdd}>
+            Add Student
+            </Button>
+            <AddStudentModal show={addModalShow} setUpdated={setIsUpdated}
+            onHide={AddModelClose}></AddStudentModal>
+        </ButtonToolbar>
+    </div>
+    </div>
+);
+```
+
+This code calls handlers on button click events e.g. ```handleUpdate``` and the logic to update/add students is being handled in ```UpdateStudentModal``` and ```AddStudentModal``` components which will be implemented below.
+
+**AddStudentModal.js**
+
+1. Add a file named ```AddStudentModal.js``` in ```/src/components``` with below code:
+```
+import React from 'react';
+import {Modal, Col, Row, Form, Button} from 'react-bootstrap';
+import {FormControl, FormGroup, FormLabel} from 'react-bootstrap';
+import { addStudent } from '../services/StudentService';
+
+
+const AddStudentModal = (props) => {
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        addStudent(e.target)
+        .then((result)=>{
+            alert(result);
+            props.setUpdated(true);
+        },
+        (error)=>{
+            alert("Failed to Add Student");
+        })
+    }
+
+    return(
+        <div className="container">
+
+            <Modal
+                {...props}
+                size="lg"
+                aria-labelledby="contained-modal-title-vcenter"
+                centered >
+
+                <Modal.Header closeButton>
+                    <Modal.Title id="contained-modal-title-vcenter">
+                        Fill In Student Information
+                    </Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Row>
+                        <Col sm={6}>
+                            <Form onSubmit={handleSubmit}>
+                                <Form.Group controlId="FirstName">
+                                    <Form.Label>First Name</Form.Label>
+                                    <Form.Control type="text" name="FirstName" required placeholder="" />
+                            </Form.Group>
+                            <Form.Group controlId="LastName">
+                                    <Form.Label>Last Name</Form.Label>
+                                    <Form.Control type="text" name="LastName" required placeholder="" />
+                            </Form.Group>
+                            <Form.Group controlId="RegistrationNo">
+                                    <Form.Label>Registration No.</Form.Label>
+                                    <Form.Control type="text" name="RegistrationNo" required placeholder="" />
+                            </Form.Group>
+                            <Form.Group controlId="Email">
+                                    <Form.Label>Email</Form.Label>
+                                    <Form.Control type="text" name="Email" required placeholder="" />
+                            </Form.Group>
+                            <Form.Group controlId="Course">
+                                    <Form.Label>Course</Form.Label>
+                                    <Form.Control type="text" name="Course" required placeholder="" />
+                            </Form.Group>
+                            <Form.Group>
+                                <p></p>
+                                <Button variant="primary" type="submit">
+                                    Submit
+                                </Button>
+                            </Form.Group>
+                            </Form>
+                        </Col>
+                    </Row>
+                </Modal.Body>
+                <Modal.Footer>
+                <Button variant="danger" type="submit" onClick={props.onHide}>
+                        Close
+                </Button>
+
+                </Modal.Footer>
+            </Modal>
+        </div>
+    );
+};
+
+export default AddStudentModal;
+```
+
+Props are used for passing states information from one component to other. In this case, for passing students information from ```Manage.js``` into ```AddStudentModal``` component.
+
+```handleSubmit``` handler will be called once user clicks submit button. This handler will call ```addStudent``` service which uses the backend endpoint to add student in database.
+
+2. Add ```addStudent``` service in ```/src/services/StudentService.js``` :
+```
+export function addStudent(student){
+  return axios.post('http://127.0.0.1:8000/students/', {
+    studentId:null,
+    FirstName:student.FirstName.value,
+    LastName:student.LastName.value,
+    RegistrationNo:student.RegistrationNo.value,
+    Email:student.Email.value,
+    Course:student.Course.value
+  })
+    .then(response=>response.data)
+}
+```
+
+**UpdateStudentModal.js**  
+1. Add a file named ```UpdateStudentModal.js``` in ```/src/components``` with below code:
+```
+import React,{Component} from 'react';
+import {Modal, Col, Row, Form, Button} from 'react-bootstrap';
+import {FormControl, FormGroup, FormLabel} from 'react-bootstrap';
+import { updateStudent } from '../services/StudentService';
+
+const UpdateStudentModal = (props) => {
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        updateStudent(props.student.studentId, e.target)
+        .then((result)=>{
+            alert(result);
+            props.setUpdated(true);
+        },
+        (error)=>{
+            alert("Failed to Update Student");
+        })
+    };
+
+    return(
+        <div className="container">
+
+            <Modal
+                {...props}
+                size="lg"
+                aria-labelledby="contained-modal-title-vcenter"
+                centered >
+
+                <Modal.Header closeButton>
+                    <Modal.Title id="contained-modal-title-vcenter">
+                        Update Student Information
+                    </Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Row>
+                        <Col sm={6}>
+                            <Form onSubmit={handleSubmit}>
+                                <Form.Group controlId="FirstName">
+                                    <Form.Label>First Name</Form.Label>
+                                    <Form.Control type="text" name="FirstName" required defaultValue={props.student.FirstName} placeholder="" />
+                            </Form.Group>
+
+                            <Form.Group controlId="LastName">
+                                    <Form.Label>Last Name</Form.Label>
+                                    <Form.Control type="text" name="LastName" required defaultValue={props.student.LastName} placeholder="" />
+                            </Form.Group>
+                            <Form.Group controlId="RegistrationNo">
+                                    <Form.Label>Registration No.</Form.Label>
+                                    <Form.Control type="text" name="RegistrationNo" required defaultValue={props.student.RegistrationNo} placeholder="" />
+                            </Form.Group>
+                            <Form.Group controlId="Email">
+                                    <Form.Label>Email</Form.Label>
+                                    <Form.Control type="text" name="Email" required defaultValue={props.student.Email} placeholder="" />
+                            </Form.Group>
+                            <Form.Group controlId="Course">
+                                    <Form.Label>Course</Form.Label>
+                                    <Form.Control type="text" name="Course" required defaultValue={props.student.Course} placeholder="" />
+                            </Form.Group>
+                            <Form.Group>
+                                <p></p>
+                                <Button variant="primary" type="submit">
+                                    Submit
+                                </Button>
+                            </Form.Group>
+                            </Form>
+                        </Col>
+                    </Row>
+                </Modal.Body>
+                <Modal.Footer>
+                <Button variant="danger" type="submit" onClick={props.onHide}>
+                        Close
+                </Button>
+
+                </Modal.Footer>
+            </Modal>
+        </div>
+    );
+};
+
+export default UpdateStudentModal;
+```
+
+2. Add ```updateStudent``` service in ```/src/services/StudentService.js``` :
+```
+export function updateStudent(stuid, student) {
+  return axios.put('http://127.0.0.1:8000/students/' + stuid + '/', {
+    FirstName:student.FirstName.value,
+    LastName:student.LastName.value,
+    RegistrationNo:student.RegistrationNo.value,
+    Email:student.Email.value,
+    Course:student.Course.value
+  })
+   .then(response => response.data)
+}
+```
+
+**Add Manage component in React Router**  
+1. To render ```Manage``` component, add this as a Route in ```/src/App.js```:
+```
+import Manage from "./components/Manage";
+function App() {
+  return (
+    <BrowserRouter>
+      <Navigation />
+      <Routes>
+         <Route exact path="/" element={<Home/>} />
+         <Route path="/students" element={<Students/>} />
+         <Route path="/manage" element={<Manage/>} />
+       </Routes>
+    </BrowserRouter>
+  );
+};
+```
