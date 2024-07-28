@@ -531,7 +531,7 @@ MIDDLEWARE = [
 ```
 
 Refresh the Students page again and the data should be loaded onto the view.
-//Image26_StudentsView
+![StudentView](/screenshots/26_ReactAppStudentsList.png)
 
 
 ## Create Manage Students Page
@@ -925,3 +925,25 @@ function App() {
   );
 };
 ```
+
+## Test CRUD Operations  
+
+1. Navigate to Manage Students page. It should look like this:
+![ReactStudentPage](/screenshots/27_ManageStudents.png)
+
+2. Click on Add Student button to open up a blank student form.
+![AddStudent](/screenshots/28_AddStudent.png)
+
+3. Fill in the student information and click submit. This will open a popup alert if student record is created successfully:
+![AddStudentSuccess](/screenshots/29_AddStudentSuccess.png)
+
+4. After closing the student form, notice that the students list is updated without refreshing the page. The ```useEffect``` hook helps to refresh the list automatically whenever a student record is created, deleted or updated.
+![ManageStudent](/screenshots/30_ManageStudentUpdated.png)
+
+5. Similarly, test out the Update and Delete operations.
+
+
+---------------------------------------------------- END ----------------------------------------------------
+   
+
+
